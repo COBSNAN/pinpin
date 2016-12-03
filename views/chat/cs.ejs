@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script type="text/javascript" src="/javascripts/jquery-1.12.1.min.js"></script>
+    <link rel="stylesheet" href="/stylesheets/bootstrap.css">
+    <link href="/stylesheets/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
+    <script type="text/javascript" src="/javascripts/bootstrap.js"></script>
+    <script src="/javascripts/emojionemin.js"></script>
+    <link rel="stylesheet" href="/stylesheets/emojionebeta.css"/>
+    <script src="/javascripts/socket.io.js"></script>
+    <script>
+    $(function(){
+    	var i=0
+    	 var socket = io.connect('http://192.168.1.104:3000');
+			  socket.on('news', function (data) {
+			    console.log(data);
+			    $("#chatc").append('<li>'+data.sendtime+'</li>')
+			  });
+		$("#tianjia").click(function(event) {
+			/* Act on the event */
+			socket.emit('myto', { my:i});
+			i++;
+		});
+    })
+    	 
+    </script>
+</head>
+<body>
+	<div id="chatc"></div>
+	<button id="tianjia">dianji</button>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+	<script type="text/javascript" src="/javascripts/jquery-1.12.1.min.js"></script>
+	<link rel="stylesheet" href="/stylesheets/bootstrap.css">
+	<script type="text/javascript" src="/javascripts/bootstrap.js"></script>
+	<title>Document</title>
+	<style>
+		.nonestyle{
+			border: 0;
+		    margin: 0;
+		    padding: 0;
+		    outline: none;
+		    readonly:readonly;
+		}
+		.fontstyle,.hideele{
+			display: none
+		}
+		.fontstyle{
+			color:gray;
+			padding-left:10px;
+		}
+		 .addrstyle{
+		    padding: 5px;
+		}
+		 .nonel::-webkit-scrollbar {
+
+   width: 0.2em;
+
+}
+
+.nonel::-webkit-scrollbar:vertical
+
+{
+
+   height: 0.2em;
+
+}
+
+/* Track */
+
+.nonel::-webkit-scrollbar-track {
+
+   -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+
+   -webkit-border-radius: 10px;
+
+   border-radius: 10px;
+
+}
+
+/* Handle */
+
+.nonel::-webkit-scrollbar-thumb {
+
+   -webkit-border-radius: 10px;
+
+   border-radius: 10px;
+
+  background: rgba(255,0,0,0.8); 
+
+   -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+
+}
+
+.nonel::-webkit-scrollbar-thumb:window-inactive {
+
+background: rgba(169,169,169,0.4); 
+
+}
+
+	</style>
+	<script>
+		$(function(){
+
+			//图片ajax上传
+      $('#imageid').change(function(){
+            var formData = new FormData($("#addimg")[0]);
+                $.ajax({  
+                      url :'/uploadhead',  
+                      type : 'POST',  
+                      data : formData,  
+        
+                      /**   
+                       * 必须false才会避开jQuery对 formdata 的默认处理   
+                       * XMLHttpRequest会对 formdata 进行正确的处理   
+                       */  
+                      processData : false,  
+                      /*   
+                       必须false才会自动加上正确的Content-Type   */
+                         
+                      contentType : false,  
+                      success : function(data) {  
+                          if(data.error){
+                              alert("上传图片失败，请重新上传！");
+                          }else{
+                              $("#headimageid").attr('src', '/images/headimage/'+data.imgpath);
+                          }
+                      },  
+                      error : function(date) {  
+                          alert("上传图片失败，请重新上传！");
+                      }  
+                  });
+     })
+
+			var count,info;
+			$(".showorhide").mouseover(function(event) {
+				/* Act on the event */
+				$(this).children('.fontstyle').show();
+			});
+			$(".showorhide").mouseout(function(event) {
+				/* Act on the event */
+				$(this).children('.fontstyle').hide();
+			});
+			$(".fontstyle").click(function(event) {
+				/* Act on the event */
+				$(this).parent(".showorhide").unbind("mouseout").unbind('mouseover');
+				$(this).hide().prev().hide();
+				$(this).nextAll(".hideele").show();
+			});
+			$("button.hideele").click(function(event) {
+				/* Act on the event */
+				var val,user={};
+				user.userid=$("#userid").text();
+				if($(this).prev()[0].tagName=='DIV'){
+					val=$(".sexradio:checked").val();
+					user.sex=val;
+					if(val==0){val='保密'}
+					if(val==1){val='男'}
+					if(val==2){val='女'}
+				}else if($(this).prev()[0].tagName=='INPUT'){
+					val=$(this).prev()[0].value;
+					if(val==null||val=="") return false;
+					user.mobile=val;
+				}else{
+					val=$(this).prev()[0].value;
+					user.motto=val;
+					if(val==null||val=="") val="您还没有填写个人格言";
+				}
+				$.post("/account/userModify",
+					  {userid:user.userid,sex:user.sex,motto:user.motto,mobile:user.mobile},
+					  function(data,status){
+					    if(data.error){
+					    	alert("修改失败");
+					    	return false;
+					    }
+				});
+				$($(this).prevAll('.showinfo')[0]).text(val);
+				$(this).hide().siblings('.hideele').hide();
+				$(this).parent(".showorhide").children('.showinfo').show();
+				$(this).parent(".showorhide").bind("mouseleave ",function(){$(this).children('.fontstyle').hide();}).bind('mouseover',function(){$(this).children('.fontstyle').show();});
+			});
+			$("#deladdr").click(function(event) {
+				/* Act on the event */
+				if(confirm("确认删除所选地址！")){
+					var  addrid=$(".addrinfo").val();
+					$.post("/address/deleteAddress",
+						  {
+						    addrid:addrid		    
+						  },
+						  function(data,status){
+						    if(data.error){
+						    	alert("地址删除出错！");
+						    	return false;
+						    }else{
+						    	$(".addrinfo").find("option:selected").remove();
+						    	alert("删除成功！");
+						    }
+					});
+				}
+			});
+			$("#verify").click(function(event) {
+				/* Act on the event */
+				if(count!=null){
+					clearInterval(count);
+				}
+				var email=$("#Acemail").text();
+				$.post("/account/sendVerifyEmail",
+					  {
+					    email:email,
+					    flag:1
+					  },
+					  function(data,status){
+					    if(data.error){
+					    	alert("发送验证码失败，重新点击验证按钮");
+					    	return false;
+					    }else{
+					    	if(data.msg){
+					    		alert(data.msg);
+					    		return false;
+					    	}else{
+					    		info=data;
+					    	}
+					    }
+					  });
+				$("#timeverif").text('10分钟后');
+				count=setInterval(counttime(),60000);
+			});
+			$("#emailverify").click(function(event) {
+				/* Act on the event */
+				$.post("/account/verifyEmail",
+					  {
+					    pin:$("#verifyPin").val(),
+					    verifyPin:info.verifyPin,
+					    userid:info.userid		    
+					  },
+					  function(data,status){
+					    if(data.error){
+					    	alert("验证邮箱失败！");
+					    	return false;
+					    }else{
+					    	if(data.type==0){
+					    		$(".warnpin").show();
+					    	}
+					    	if(data.type==1){
+					    		alert(data.msg);
+					    		$(".close").click();
+					    		$("#verify").hide();
+					    		clearInterval(count)
+					    	}
+					    }
+				});
+			});
+			var counttime=function(){
+				var num=10;
+				return function(){
+					num-=1;
+					if(num==0){
+						$("#timeverif").text('已');
+						$("#reset").attr(
+							'disabled','disabled'
+						);
+						clearInterval(count);
+					}else{
+						$("#timeverif").text(num+'分钟后');
+					}
+				}
+			}
+
+			$("#confirmCP").click(function(event) {
+				/* Act on the event */
+				$.ajax({
+                cache: true,
+                type: "POST",
+                url:'/account/changePwd',
+                data:$('#changePwdUrl').serialize(),// 你的formid
+                async: false,
+                error: function(request) {
+                    alert("Connection error");
+                },
+                success: function(data) {
+					if (data.error) {
+						alert("密码修改失败！");
+					} else {
+						if(data.type==0){
+					    		$(".warnPwd").show();
+					    	}
+					    	if(data.type==1){
+					    		alert(data.msg);
+					    		$(".close").click();
+					    	}
+					}
+                }
+            });
+			});
+
+			$("#ForHM").click(function(event) {
+				/* Act on the event */
+				$(".warnPwd").hide();
+				$('#changePwdUrl').reset();
+				$("#userid1").val($("#userid").text());
+			});
+			$("#showarea").click(function(event) {
+				/* Act on the event */
+				$("#detailaddr").val("");
+				selectchange(1,'province');
+			});
+			/*地址保存*/
+			$("#saveAddress").click(function(event) {
+				/* Act on the event */
+				var prioraddr=$("#province").find("option:selected").text()+$("#city").find("option:selected").text()+$("#area").find("option:selected").text();
+				var detailaddr=$("#detailaddr").val();
+
+				$.post("/address/saveORupdateAddress",
+					  {
+					    endcode:$("#area").val(),
+					    uid:$("#userid").text(),
+					    detailaddr:detailaddr,
+					    prioraddr:prioraddr,
+					    notes:detailaddr		    
+					  },
+					  function(data,status){
+					    if(data.error){
+					    	alert("地址添加出错，请从新添加！");
+					    	return false;
+					    }else{
+					    	$(".close").click();
+					    	$(".addrinfo").append('<option selected = "selected" value="'+data.addr.addrid+'">'+prioraddr+detailaddr+'</option>');
+					    }
+				});
+			});
+
+		})
+		
+		function selectchange(code,type){
+			var  table,field;
+			if(type=='city'){
+				table='city';
+				field='provinceId'
+			}
+			if(type=='area'){
+				table='area';
+				field='cityId'
+			}
+			if(type=='province'){
+				table='province';
+				field='1'
+			}
+			$.post("/address/getAreaList",
+					  {
+					    addrTable:table,
+					    addrfield:field,
+					    addrCode:code		    
+					  },
+					  function(data,status){
+					    if(data.error){
+					    	alert("获取省市县失败！");
+					    	return false;
+					    }else{
+					    	var selectHtml="";
+					    	$.each(data.addrdata, function(index, val) {
+					    		 /* iterate through array or object */
+					    		 if (index==0) {
+					    		 	selectHtml+="<option selected = 'selected' value='"+val.CODE+"'>"+val.NAME+"</option>"
+					    		 } else {
+					    		 	selectHtml+="<option  value='"+val.CODE+"'>"+val.NAME+"</option>"
+					    		 }
+					    	});
+					    	$("#"+table).empty().append(selectHtml).change();
+					    }
+				});
+		}
+		
+	</script>
+</head>
+<body>
+	<% include ../head %>
+	<form action="" id="addimg"><input id="imageid" type="file" accept="image/png,image/gif,image/jpeg" name="headimage" style="display:none" /></form>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-6">
+				<div style="max-width:500px;margin:auto">
+					<div class="panel panel-default">
+					  <div class="panel-heading"><span style="display: none" id="userid"><%=user.userid%></span><span><%=user.nickname%>  </span><%=user.credit%><img src="" alt="" style="width:30px"><a style="margin-left: 56%" data-toggle="modal" data-target="#changePwd" id="ForHM">修改密码</a></div>
+					  <div class="panel-body">
+					    <table> 
+			              <tr>
+			                <td rowspan=3 ><img src="/images/headimage/<%=user.headaddr%>" alt="" style="weight:100px;height:100px" title="点击修改图像，请尽量使用正方形图片" id="headimageid" onclick="imageid.click()"></td>
+			                <td><span id="Acemail"><%=user.email%></span><%if(user.status==0){%><button class="btn btn-default" id="verify" data-toggle="modal" data-target="#verifyemail">验证</button><%}%></td>
+			              </tr>
+			              <tr>
+			                <td class="showorhide"><span class="showinfo"><%if(user.mobile!=null){%><%=user.mobile%><%}else {%>保密<%}%></span><span class="fontstyle">修改</span><input type="number" class="form-control hideele" style="width: 150px" id=""  placeholder="tel "><button class="btn btn-default hideele">更改</button></td>
+			              </tr>
+			              <tr>
+			                <td class="showorhide"><span class="showinfo"><%if(user.sex==0){%>保密<%}else if(user.sex==1){%>男<%}else {%>女<%}%></span><span class="fontstyle">修改</span>
+			                	<div class="hideele" style="float: left">
+										<label class="radio-inline">
+										  <input type="radio" name="inlineRadioOptions" class="sexradio" <%if(user.sex==0){%>checked<%}%> value="0">保密
+										</label>
+										<label class="radio-inline">
+										  <input type="radio" name="inlineRadioOptions" class="sexradio" <%if(user.sex==1){%>checked<%}%> value="1">男
+										</label>
+										<label class="radio-inline">
+										  <input type="radio" name="inlineRadioOptions" class="sexradio" <%if(user.sex==2){%>checked<%}%> value="2">女
+										</label>
+								</div>
+			                <button class="btn btn-default hideele">更改</button></td>
+			              </tr>
+			            </table>
+			            <div><h4>地址<button class="btn btn-default" id="showarea" data-toggle="modal" data-target="#addaddr">添加</button></h4>
+				             <div class="input-group">
+	     						<select class="form-control addrinfo">
+	     							<%for (var i = 0; i < addr.length; i++) {%>
+									  <option value="<%= addr[i].addrid%>"><%= addr[i].prioraddr+addr[i].detailaddr%></option>
+									<%};%>
+								</select>
+	   						   <div class="input-group-addon" id="deladdr">删除</div>
+	   						 </div>
+	   					</div>
+			            <div class="showorhide" style="padding-top:10px;padding-buttom:10px"><span class="showinfo"><%if(user.motto!=null){%><%=user.motto%><%}else {%>您还没有填写个人格言<%}%></span><span class="fontstyle">修改</span><textarea class="form-control hideele" rows="3"><%=user.motto%></textarea><button class="btn btn-default hideele">更改</button></div>
+					  </div>
+					</div>	
+					<div class="panel panel-default">
+					  <div class="panel-heading">
+					    <h3 class="panel-title">order</h3>
+					  </div>
+					  <div class="panel-body nonel" style="height:350px;overflow:scroll;overflow-x:hidden;">
+					     <table class="table table-striped">
+						   <thead>
+						      <tr>
+						         <th>序号</th>
+						         <th>拼单标题</th>
+						         <th>商店</th>
+						         <th>状态</th>
+						         <th>操作</th>
+						      </tr>
+						   </thead>
+						   <tbody>
+						   	  <%for (var i = 0; i < myorder.length; i++) {%>
+								<tr>
+						         <td><%=i+1%></td>
+						         <td><%=myorder[i].title%></td>
+						         <td><%=myorder[i].shopname%></td>
+						         <td>
+						         	<%if (myorder[i].orderstatus==0){%>待提交
+										<% }else if (myorder[i].orderstatus== 1){%> 待匹配  
+										<% }else if (myorder[i].orderstatus== 2){%> 失效 	
+										<% }else if (myorder[i].orderstatus== 3){%> 已匹配  
+										<% }else if (myorder[i].orderstatus== 4){%> 完成交易
+									<%};%>
+						         </td>
+						         <td><a href="/order/getOrderByOrderid?orderid=<%=myorder[i].orderid%>">详情</a></td>
+						      </tr>
+							  <%};%>
+						   </tbody>
+						</table>
+					  </div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div style="max-width:500px;margin:auto">
+					<div class="panel panel-default">
+					  <div class="panel-heading">
+					    <h3 class="panel-title">相关订单</h3>
+					  </div>
+					  <div class="panel-body nonel" style="height:350px;overflow:scroll;overflow-x:hidden;">
+					     <table class="table table-striped" >
+						   <thead>
+						      <tr>
+						         <th style="width: 12%">序号</th>
+						         <th style="width: 44%">拼单标题</th>
+						         <th style="width: 16%">商店</th>
+						         <th style="width: 16%">进展</th>
+						         <th style="width: 16%">操作</th>
+						      </tr>
+						   </thead>
+						   <tbody>
+						   	  <%for (var i = 0; i < likeorder.length; i++) {%>
+								<tr>
+						         <td style="vertical-align:middle;"><%=i+1%></td>
+						         <td style="vertical-align:middle;"><%=likeorder[i].title%></td>
+						         <td style="vertical-align:middle;"><%=likeorder[i].shopname%></td>
+						         <td style="vertical-align:middle;">
+						         	<%if (likeorder[i].type==0){%>关注
+										<% }else if (likeorder[i].type== 1){%> 等待匹配  
+										<% }else if (likeorder[i].type== 2){%> 已匹配 	
+										<% }else if (likeorder[i].type== 3){%> 完成交易  
+										<% }else if (likeorder[i].type== 4){%> 已评价
+									<%};%>
+						         </td>
+						         <td style="vertical-align:middle;"><a href="/order/getOrderByOrderid?orderid=<%=likeorder[i].orderid%>">详情</a></td>
+						      </tr>
+							  <%};%>
+						   </tbody>
+						</table>
+					  </div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="addaddr" role="dialog" aria-labelledby="gridSystemModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="title">添加收货地址</h4>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <div class="row layout addrstyle" >
+            <label for="province" class="col-sm-3 control-label text-right"> &nbsp;省份</label>
+        <div class="col-sm-9">
+          <select class="form-control" id="province" placeholder="请选择你所在省份" onchange="selectchange(this.value,'city');">
+          </select>
+        </div>
+          </div>
+          <div class="row layout addrstyle" >
+            <label for="city" class="col-sm-3 control-label text-right"> &nbsp;城市</label>
+        <div class="col-sm-9">
+          <select class="form-control" id="city" placeholder="请选择你所在城市" onchange="selectchange(this.value,'area');">
+          </select>
+        </div>
+          </div>
+          <div class="row layout addrstyle" >
+            <label for="area" class="col-sm-3 control-label text-right"> &nbsp;县区</label>
+        <div class="col-sm-9">
+          <select class="form-control" id="area" placeholder="请选择你所在买县区">
+          </select>
+        </div>
+          </div>
+          <div class="row layout addrstyle" >
+            <label for="detailaddr" class="col-sm-3 control-label text-right"> &nbsp;详细地址</label>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" id="detailaddr" placeholder="写到自己的小区就可以了">
+        </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="saveAddress">添加地址</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!--验证邮箱-->
+<div class="modal fade" id="verifyemail" role="dialog" aria-labelledby="gridSystemModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="title">验证邮箱</h4>
+        <br><small>验证码稍后会发送到你的注册邮箱，请注意查看</small>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+    		<div class="form-group">
+				<input  type="email" class="form-control" placeholder="注册邮箱" id="emailaddr" value="<%=user.email%>" readonly>
+			</div>
+			<div class="form-group">
+				<div class="input-group">
+			      <input type="text" class="form-control"  placeholder="邮箱收到的六位验证码"  id="verifyPin">
+			      <div class="input-group-addon"><span id="timeverif">10分钟后</span>失效</div>
+			    </div>
+			    <div class="alert alert-warning warnpin" data-dismiss="alert" style="display:none">
+			      <strong>提示！</strong>验证码不对。
+			    </div>
+			</div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="emailverify">验证</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+<!--修改密码-->
+<div class="modal fade" id="changePwd" role="dialog" aria-labelledby="gridSystemModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="title">修改密码</h4>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+        	<form id="changePwdUrl" method="post">
+	        	<input type="text" name="userid" value="<%=user.userid%>" style="display: none" id="userid1"></input>
+	    		<div class="form-group">
+	    			<div class="input-group">
+		    			<div class="input-group-addon">旧密码</div>
+						<input type="password" name="OldPwd" class="form-control" id="OldPassword">
+					</div>
+					<div class="alert alert-warning warnPwd" data-dismiss="alert" style="display:none">
+				      <strong>提示！</strong>旧密码不正确。
+				    </div>
+				</div>
+				<div class="form-group">
+					<div class="input-group">
+		    			<div class="input-group-addon">新密码</div>
+						<input type="password" name="Pwd" class="form-control" id="NewPassword">
+					</div>
+				</div>
+			</form>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="confirmCP">确认修改</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+</body>
+</html>

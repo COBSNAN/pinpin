@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <script type="text/javascript" src="/javascripts/jquery-1.12.1.min.js"></script>
+  <link rel="stylesheet" href="/stylesheets/bootstrap.css">
+  <script type="text/javascript" src="/javascripts/bootstrap.js"></script>
+  <script>
+    $(function(){
+      var userorder;
+      selectchange(1,'province');
+      $("#ordersearch").click(function(event) {
+        /* Act on the event */
+        $.post("/order/getOrderList",
+            {
+              shopid:$("#shop").val(),
+              endcode:$("#area").val(),
+              flag:2        
+            },
+            function(data,status){
+                if (data.error) {
+                  alert("查找失败！");
+                } else {
+                  console.log(4545);
+                  userorder=data.userorder;
+                   var html="";
+                  for(var i=0;i<userorder.length;i++){
+                      html+='<div class="col-sm-4"><div class="showstyle"><div><table><tr><td rowspan=2 ><img src="/images/headimage/'+userorder[i].headaddr+'" alt="" style="height:50px"></td><td><span>'+userorder[i].nickname+'</span></td></tr><tr><td><span></span><span>'+userorder[i].shopname+'</span></td></tr></table></div><div id="content" style="word-break:break-all">'+userorder[i].content+'</div><div style="word-break:break-all"><address>'+userorder[i].addr+'</address></div><a href="/order/getOrderByOrderid?orderid='+userorder[i].orderid+'" class="btn btn-default btn-xs btn-block">查看详情</a></div></div>'
+                  }
+                  $("#ordercontentlist").empty().append(html);
+                }
+        });
+      });
+    })
+    function selectchange(code,type){
+      var  table,field;
+      if(type=='city'){
+        table='city';
+        field='provinceId'
+      }
+      if(type=='area'){
+        table='area';
+        field='cityId'
+      }
+      if(type=='province'){
+        table='province';
+        field='1'
+      }
+      $.post("/address/getAreaList",
+            {
+              addrTable:table,
+              addrfield:field,
+              addrCode:code       
+            },
+            function(data,status){
+              if(data.error){
+                alert("获取省市县失败！");
+                return false;
+              }else{
+                var selectHtml="";
+                $.each(data.addrdata, function(index, val) {
+                   /* iterate through array or object */
+                   if (index==0) {
+                    selectHtml+="<option selected = 'selected' value='"+val.CODE+"'>"+val.NAME+"</option>"
+                   } else {
+                    selectHtml+="<option  value='"+val.CODE+"'>"+val.NAME+"</option>"
+                   }
+                });
+                $("#"+table).empty().append(selectHtml).change();
+              }
+        });
+    }
+  </script>
+  <style>
+  .article{
+    padding: 20px;
+    }
+  .showstyle{
+    margin: auto;width: 200px; height:324px
+  }
+  </style>
+  <title>Document</title>
+</head>
+<body>
+<% include ../head %>
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#searchcontent" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">拼拼</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="searchcontent">
+      <form class="navbar-form navbar-left" role="search" id="searchform">
+        <div class="form-group">
+          <div class="input-group">
+              <div class="input-group-addon">商户</div>
+              <select class="form-control" id="shop" name="shopid">
+              <option value="">全部</option>
+              <%for (var i = 0; i < shop.length; i++) {%>
+                  <option value="<%= shop[i].shopid%>"><%= shop[i].shopname%></option>
+              <%};%>
+              </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="input-group">
+              <div class="input-group-addon">省份</div>
+              <select class="form-control" id="province" onchange="selectchange(this.value,'city');">
+              </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="input-group">
+              <div class="input-group-addon">城市</div>
+              <select class="form-control" id="city" onchange="selectchange(this.value,'area');">
+              </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="input-group">
+              <div class="input-group-addon">县区</div>
+              <select class="form-control" id="area">
+              </select>
+          </div>
+        </div>
+        <button type="button" class="btn btn-default" id="ordersearch">查询</button>
+      </form>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+
+<div class="container-fluid">
+	<div class="row">
+	    <div class="col-sm-9">
+		  <div class="row" id="ordercontentlist">
+          <%for (var i = 0; i < userorder.length; i++) {%>
+		        <div class="col-sm-4">
+		        <div class="showstyle">
+		          <div >
+		            <table> 
+		              <tr>
+		                <td rowspan=2 ><img src="/images/headimage/<%=userorder[i].headaddr%>" alt="" style="height:50px"></td>
+		                <td><span><%=userorder[i].nickname%></span></td>
+		              </tr>
+		              <tr>
+		                <td><span></span><span><%=userorder[i].shopname%></span></td>
+		              </tr>
+		            </table>
+		          </div>
+		          <div id="content" style="word-break:break-all">
+		            <%=userorder[i].content%>
+		          </div>
+		          <div style="word-break:break-all"><address><%=userorder[i].addr%></address></div>
+              <a href="/order/getOrderByOrderid?orderid=<%=userorder[i].orderid%>" class="btn btn-default btn-xs btn-block">查看详情</a>
+		          </div>
+		        </div>
+          <%}%>
+		  </div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

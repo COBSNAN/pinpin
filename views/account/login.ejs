@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+	<script type="text/javascript" src="/javascripts/jquery-1.12.1.min.js"></script>
+	<link rel="stylesheet" href="/stylesheets/bootstrap.css">
+	<link rel="stylesheet" href="/stylesheets/bootstrapValidator.css"/>
+	<script type="text/javascript" src="/javascripts/bootstrap.js"></script>
+	<script type="text/javascript" src="/javascripts/bootstrapValidator.js"></script>
+	<script type="text/javascript">
+		$(function () {
+			var result,count,info;
+			$("#lookforPwd").click(function(event) {
+				/* Act on the event */
+				if(count!=null){
+					clearInterval(count);
+				}
+				if(document.getElementById("emailaddr").checkValidity()){
+					$("#emailaddr1").val($("#emailaddr").val()).removeAttr('readonly');
+				}else{
+					$("#emailaddr1").val().removeAttr('readonly');
+				}
+				$(".warnemail").hide();
+				var a=Math.floor(Math.random()*10);
+				var b=Math.floor(Math.random()*10);
+				result=a+b;
+				$("#verify").text(a+"+"+b+"=");
+				$('#result').val('');
+				$(".sendlater").hide();
+				$(".sendbefore").show();
+				$("#sendflg").show();
+				$("#reset").hide().removeAttr('disabled');
+			});
+			$("#sendflg").click(function(event) {
+				/* Act on the event */
+				if(!document.getElementById("emailaddr1").checkValidity()){
+					$("#submit2").click();
+					return false;
+				}else if(result==$('#result').val()){
+					$('.warnresult').hide()
+					$.post("/account/sendVerifyEmail",
+					  {
+					    email:$("#emailaddr1").val()
+					  },
+					  function(data,status){
+					    if(data.error){
+					    	alert("发送验证码失败，重新发送吧！");
+					    	return false;
+					    }else{
+					    	if(data.msg){
+					    		$(".warnemail").show();
+					    		return false;
+					    	}else{
+					    		info=data;
+					    	}
+					    }
+					  });
+					$("#emailaddr1").attr('readonly', 'readonly');
+					$(".sendbefore").hide();
+					$("#inputNewPassword").val('');
+					$("#verifyPin").val('');
+					$("#timeverif").text('10分钟后');
+					$(".sendlater").show();
+					$(".warnpin").hide();
+					$("#sendflg").hide();
+					$("#reset").show();
+					count=setInterval(counttime(),60000);
+
+				}else{
+					$('#result').val('').focus();
+					$('.warnresult').show();
+				}
+			});
+			$("#reset").click(function(event) {
+				/* Act on the event */
+				$.post("/account/resetAccountPwd",
+					  {
+					    email:$("#emailaddr1").val(),
+					    pin:$("#verifyPin").val(),
+					    newPwd:$("#inputNewPassword").val(),
+					    verifyemail:info.verifyemail,
+					    verifyPin:info.verifyPin,
+					    userid:info.userid		    
+					  },
+					  function(data,status){
+					    if(data.error){
+					    	alert("重置密码失败！");
+					    	return false;
+					    }else{
+					    	if(data.type==0){
+					    		$(".warnpin").show();
+					    	}
+					    	if(data.type==1){
+					    		alert(data.msg)
+					    	}
+					    	if(data.type==2){
+					    		alert(data.msg);
+					    		$(".close").click();
+					    	}
+					    }
+					  });
+			});
+			var counttime=function(){
+				var num=10;
+				return function(){
+					num-=1;
+					if(num==0){
+						$("#timeverif").text('已');
+						$("#reset").attr(
+							'disabled','disabled'
+						);
+						clearInterval(count);
+					}else{
+						$("#timeverif").text(num+'分钟后');
+					}
+				}
+			}
+		})
+	</script>
+	<title>拼拼</title>
+</head>
+<body>
+<%if(msg){%>
+<h1><%=msg%></h1>
+<%}%>
+<div style="width:300px; margin:auto;margin-top:6%;padding:20px;border:1px solid #b3d9ff">
+	<div style="padding-bottom:20px"><h2 class="text-center">PinPin</h2><small>来我们一起用拼拼！</small></div>
+  <!-- Nav tabs -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active" style="width:50%;text-align:center;"><a href="#login" aria-controls="login" role="tab" data-toggle="tab" style="text-align=center">登陆</a></li>
+    <li role="presentation" style="width:50%;text-align:center;"><a href="#register" aria-controls="register" role="tab" data-toggle="tab" style="text-align=center">注册</a></li>
+  </ul>
+
+  <!-- Tab panes -->
+  <div class="tab-content" style="padding:20px;">
+    <div role="tabpanel" class="tab-pane active" id="login">
+		<form action="/account/loginAction" method="post">
+			<div class="form-group">
+				<input  type="email" name="email" class="form-control" placeholder="邮箱" id="emailaddr">
+			</div>
+			<div class="form-group">
+				<input type="password" name="Pwd" class="form-control" id="inputPassword" placeholder="密码">
+			</div>
+  			<input class="btn btn-default btn-block" type="submit" value="登陆">
+  			<a href="" data-toggle="modal" data-target="#resetPwd" id="lookforPwd"><p class="text-right"><small>登陆失败,找回密码</small></p></a>
+			
+		</form>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="register">
+		<form action="/account/registAction" method="post">
+			<div class="form-group">
+				<input  type="text" name="nickname" class="form-control" placeholder="昵称" value="">
+			</div>
+			<div class="form-group">
+				<input  type="email" name="email" class="form-control" placeholder="邮箱" required >
+			</div>
+			<div class="form-group">
+				<input type="password" name="Pwd" class="form-control" id="inputPassword" placeholder="密码">
+			</div>
+			<input class="btn btn-default btn-block" type="submit" value="注册">
+		</form>
+	   
+    </div>
+  </div>
+
+</div>
+<div class="modal fade" id="resetPwd" role="dialog" aria-labelledby="gridSystemModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="title">找回密码<br><small>验证码稍后会发送到你的注册邮箱，请注意查看</small></h4>
+      </div>
+      <div class="modal-body">
+      	<form action="" id="form2">
+        	<div class="form-group">
+				<input  type="email" class="form-control" placeholder="注册邮箱" id="emailaddr1">
+				<div class="alert alert-warning warnemail" data-dismiss="alert" style="display:none">
+			      <strong>提示！</strong>邮箱没有注册。
+			    </div>
+			</div>
+			<div class="form-group sendbefore">
+				<div class="input-group">
+				  <div class="input-group-addon" id="verify">2+3=</div>
+			      <input type="text" class="form-control" id="result"  placeholder="左边式子结果">
+			    </div>
+			    <div class="alert alert-warning warnresult" data-dismiss="alert" style="display:none">
+			      <strong>提示！</strong>运算结果不对。
+			    </div>
+			</div>
+			<div class="form-group sendlater">
+				<input type="password" class="form-control" id="inputNewPassword" placeholder="新密码">
+			</div>
+			<div class="form-group sendlater">
+				<div class="input-group">
+			      <input type="text" class="form-control"  placeholder="邮箱收到的六位验证码"  id="verifyPin">
+			      <div class="input-group-addon"><span id="timeverif">10分钟后</span>失效</div>
+			    </div>
+			    <div class="alert alert-warning warnpin" data-dismiss="alert" style="display:none">
+			      <strong>提示！</strong>验证码不对。
+			    </div>
+			</div>
+			<input class="btn btn-default btn-block" type="submit" style="display:none" id="submit2">
+		</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="sendflg">发送验证码</button>
+        <button type="button" class="btn btn-primary" id="reset" style="display:none">重置密码</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <script type="text/javascript" src="/javascripts/jquery-1.12.1.min.js"></script>
+  <link rel="stylesheet" href="/stylesheets/bootstrap.css">
+  <script type="text/javascript" src="/javascripts/bootstrap.js"></script>
+  <script src="/javascripts/emojionemin.js"></script>
+  <link rel="stylesheet" href="/stylesheets/emojionebeta.css"/>
+  <style>.article{
+    padding: 20px;
+    }
+    .wordbreak{
+      word-break:break-all
+    }
+    </style>
+    <script>
+      window.onload=function(){
+        var contentHtml=emojione.shortnameToDivImage('<%=order.content%>');
+        $("#contentHtml").html(contentHtml);
+        console.log('<%=user.userid%>==<%=order.uid%>')
+        if(<%=loginuser.userid%>==<%=order.uid%>){
+            $("#userPinfo").show();
+        }else{
+
+            $.post("/account/getmatch",
+                  {
+                    friendid: <%=user.userid%> 
+                  },
+                  function(data,status){
+                    if(data.error){
+                      console.log("获取我的关系失败！");
+                      return false;
+                    }else{
+                      if(data.usermatch){
+                        if(data.usermatch.type1==2){
+                            $("#userPinfo").show();
+                        }else {
+                            if(data.usermatch.addflg==1){
+                                $("#addfriend").text('正在等待对方加你为好友').attr('disabled', 'disabled').show();
+                            }else{$("#addfriend").show();}
+                        }
+                      }else{
+                          $("#addfriend").show();
+                      }
+                  }
+              });
+                    
+        }
+      }
+      $(function(){
+        //删除订单
+        $("#deleteOrder").click(function(event) {
+          /* Act on the event */
+          if (confirm("确认删除此订单")) {
+                $.post("/order/removeOrder",
+                {orderid:<%=order.orderid%>},
+                function(data,status){
+                  if(data.error){
+                    alert("删除失败");
+                    return false;
+                  }else{
+                    alert("删除成功,点击确认后页面跳转到个人页面");
+                    document.getElementById("mymain").click();
+                  }
+                });
+          }
+        });
+        //进行匹配
+         $("#saveLikematch").click(function(event) {
+          /* Act on the event */
+            var myoid=$("#myorder").val();
+             $.post("/order/getlike",
+             {orderid:<%=order.orderid%>,myoid:myoid,type:1,touid:<%=order.uid%>},
+             function(data,status){
+               if(data.error){
+                 alert("匹配失败");
+                 return false;
+               }else{
+                    $("#like").parent().remove();
+                    $("#getmatch").text('等待对方同意匹配').attr('disabled', 'disabled');
+                    $(".close").click();
+
+              }
+             });
+        });
+          //关注订单
+          $("#like").click(function(event) {
+          /* Act on the event */
+          if (confirm("确认关注此订单")) {
+                $.post("/order/getlike",
+                {orderid:<%=order.orderid%>,type:0},
+                function(data,status){
+                  if(data.error){
+                    alert("关注失败");
+                    return false;
+                  }else{
+                    $("#like").text('已关注').attr('disabled', 'disabled');
+                  }
+                });
+          }
+        });
+        /*点击匹配事件*/
+        $("#getmatch").click(function(event) {
+
+        /* Act on the event */
+          $.post("/order/getOrderList",
+              {
+                mineflag:1,
+                flag:2     
+              },
+              function(data,status){
+                if(data.error){
+                  alert("获取我的订单失败！");
+                  return false;
+                }else{
+                  console.log(123123);
+                  var selectHtml="<option value=''>不选择</option>";
+                  $.each(data.userorder, function(index, val) {
+                     /* iterate through array or object */
+
+                      selectHtml+="<option  value='"+val.orderid+"'>"+val.title+"</option>"
+                  });
+                  $("#myorder").empty().append(selectHtml);
+                }
+          });
+      });
+
+
+        /*加好友*/
+        $("#addfriend").click(function(event) {
+          /* Act on the event */
+          if (confirm("确认要和<%=user.nickname%>加为好友")) {
+                $.post("/account/setmatch",
+                {friendid:<%=user.userid%>,addflg:1},
+                function(data,status){
+                  if(data.error){
+                    alert("加好友失败");
+                    return false;
+                  }else{
+                    $("#addfriend").text('等待对方同意匹配').attr('disabled', 'disabled');
+                  }
+                });
+          }
+        });
+
+        /*完成订单*/
+        $("#confirmend").click(function(event) {
+          /* Act on the event */
+          if (confirm("确认完成这次订单了")) {
+                $.post("/order/getlike",
+                 {orderid:<%=order.orderid%>,type:5,touid:<%=order.uid%>},
+                 function(data,status){
+                   if(data.error){
+                     alert("匹配失败");
+                     return false;
+                   }else{
+                        $("#confirmend").text('等待对方确认完成').attr('disabled', 'disabled');
+                  }
+                 });
+          }
+        });
+
+        /*评价*/
+        $("#savecontent").click(function(event) {
+          /* Act on the event penfen:$("input[name='penfen']:checked").val(), 信用度 */
+
+             $.post("/order/getlike",
+                 {orderid:<%=order.orderid%>,type:4,touid:<%=order.uid%>,PJcontent:$("#PJcontent").val()},
+                 function(data,status){
+                   if(data.error){
+                     alert("评价失败");
+                     return false;
+                   }else{
+                        $("#contentorder").text('已评价').attr('disabled', 'disabled');
+                        $(".close").click();
+                  }
+            });
+        });
+
+      })
+      
+    </script>
+  <title>Document</title>
+</head>
+<body>
+<% include ../head %>
+<div class="container-fluid">
+	<div class="row">
+	    <div class="col-sm-9">
+		  <div class="row">
+		        <div class="col-sm-3 col-sm-offset-2">
+		            <img src="/images/headimage/<%=user.headaddr%>" alt="" style="height:100px">
+		            <div style="margin-top: 5px"><span style="font-size:24px;color:red;" data-container="body" data-html="true" data-toggle="popover" data-placement="bottom"><%=user.nickname%></span> <%=user.credit%><img src="" alt=""style="width:30px"></div>
+                <div style="display: none" id="userPinfo">
+                  手机号:<%if(user.mobile!=null){%><%=user.mobile%><%}else {%>保密<%}%></br>
+                  邮箱:<%=user.email%></br>
+                  性别:<%if(user.sex==0){%>保密<%}else if(user.sex==1){%>男<%}else {%>女<%}%></br>
+                </div>
+                <div><%=user.motto%></div>
+                <div><button type="button" class="btn btn-default" id="addfriend" style="display: none">加好友</button></div>
+		        </div>
+            <div class="col-sm-6"  style="border-left:1px solid #000;padding-left:100px">
+              <div id="ordertitle">
+                  <h4>宝贝标题</h4>
+                  <div class="wordbreak"><%=order.title%></div>
+              </div>
+              <div id="shop">
+                  <h4>所属商城</h4>
+                  <%=shopname%>
+              </div>
+              <div id="status">
+                  <h4>拼单状态</h4>
+                  <%if (order.orderstatus==0){%>待提交
+                    <% }else if (order.orderstatus== 1){%> 待匹配  
+                    <% }else if (order.orderstatus== 2){%> 已失效  
+                    <% }else if (order.orderstatus== 3){%> 已匹配,<%=likeuname.nickname%>与其匹配
+                    <% }else if (order.orderstatus== 4){%> 完成交易,<%=likeuname.nickname%>与其匹配
+                  <%};%>
+              </div>
+		          <div id="content" class="wordbreak">
+                <h4>详细</h4>
+		            <div id="contentHtml"></div>
+		          </div>
+              
+              <div>
+               <div id="carousel-example-generic" class="carousel slide" data-ride="carousel" style="height: 125px">
+                <!-- Indicators -->
+                <ol class="carousel-indicators">
+                  <%if(order.imgpath){ var imgs=order.imgpath.split(",");for (var i = imgs.length - 2; i >= 0; i--) {%>
+                    <li data-target="#carousel-example-generic" data-slide-to="<%=i%>"></li>
+                  <%}}%>
+                </ol>
+
+                <!-- Wrapper for slides -->
+                <div class="carousel-inner" role="listbox">
+                  <%if(order.imgpath){ var imgs=order.imgpath.split(",");for (var i = imgs.length - 2; i >= 0; i--) {%>
+                    <%if(i==0){%>
+                        <div class="item active">
+                    <%}else{%>
+                        <div class="item">
+                    <%}%>
+                    <img src="/images/orderimg/<%=imgs[i]%>" alt="宝贝图片..." style="margin:0 auto;height: 125px">
+                    <div class="carousel-caption">
+                    </div>
+                  </div>
+                  <%}}%>
+                </div>
+
+                <!-- Controls -->
+                <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
+                  <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                  <span class="sr-only">Previous</span>
+                </a>
+                <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
+                  <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                  <span class="sr-only">Next</span>
+                </a>
+              </div>
+          </div>
+           <div><%=order.failtime%>日失效</div>
+		          <div class="wordbreak"><address><em><%=order.addr%></em></address></div>
+              <div class="btn-group btn-group-justified" role="group" aria-label="...">
+                <%if((order.orderstatus==0||order.orderstatus==2)&&order.uid==loginuser.userid){%>
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-default" id="editorder"><a href="/order/order?orderid=<%=order.orderid%>">修改</a></button>
+                    </div>
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-default" id="deleteOrder">删除</button>
+                    </div>
+                <%}%>
+                <%if(order.orderstatus==1&&order.uid!=loginuser.userid){%>
+                    <%if(liketype){
+                        if(liketype.type==0){%>
+                            <div class="btn-group" role="group">
+                              <button type="button" class="btn btn-default" id="getmatch" data-toggle="modal" data-target="#getLikematch">进行匹配</button>
+                            </div>
+                            <div class="btn-group" role="group">
+                              <button type="button" class="btn btn-default" id="like" disabled="disabled">已关注</button>
+                            </div> 
+                        <%}
+                        if(liketype.type==1){%>
+                            <div class="btn-group" role="group">
+                              <button type="button" class="btn btn-default"  disabled="disabled">等待对方同意匹配</button>
+                            </div>
+                        <%}
+                    }else{%>
+                        <div class="btn-group" role="group">
+                          <button type="button" class="btn btn-default" id="getmatch" data-toggle="modal" data-target="#getLikematch">进行匹配</button>
+                        </div>
+                        <div class="btn-group" role="group">
+                          <button type="button" class="btn btn-default" id="like">关注</button>
+                        </div>
+                    <%}%>
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-default" id="chat"><a href="/chat?chatuid=<%=order.uid%>">聊天</a></button>
+                    </div>
+                <%}%>
+                <%if(order.orderstatus>1&&order.uid!=loginuser.userid){%>
+                    <%if(liketype){
+                        if(liketype.type==2){%>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" disabled="disabled">已匹配</button>
+                              </div>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" id="confirmend" >确认完成</button>
+                              </div>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" id="chat"><a href="/chat?chatuid=<%=order.uid%>">聊天</a></button>
+                              </div>
+                          <%}else
+                          if(liketype.type==5){%>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" disabled="disabled">已匹配</button>
+                              </div>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" disabled="disabled">等待对方确认完成</button>
+                              </div>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" id="chat"><a href="/chat?chatuid=<%=order.uid%>">聊天</a></button>
+                              </div>
+                          <%}else
+                          if(liketype.type==3){%>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" id="getmatch" disabled="disabled">已完成</button>
+                              </div>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" id="contentorder" data-toggle="modal" data-target="#setcontent">评价这次拼单</button>
+                              </div>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" id="chat"><a href="/chat?chatuid=<%=order.uid%>">聊天</a></button>
+                              </div>
+                          <%}else{%>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" id="getmatch" disabled="disabled">已完成</button>
+                              </div>
+                              <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" >已评价</button>
+                              </div>
+                          <%}
+                    }
+                }%>
+              </div>
+		        </div>
+		  </div>
+		</div>
+	</div>
+</div>
+  <div class="modal fade" id="getLikematch" role="dialog" aria-labelledby="gridSystemModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="title">匹配拼单<br><small>请选择自己的订单与其进行拼单，若没有就选择无</small></h4>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <div class="row layout" >
+            <label for="province" class="col-sm-2 control-label text-right"> &nbsp;我的订单</label>
+            <div class="col-sm-10">
+              <select class="form-control" id="myorder">
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="saveLikematch">进行匹配</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="modal fade" id="setcontent" role="dialog" aria-labelledby="gridSystemModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="title">评价拼单<br><small>请认真评价</small></h4>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <div class="row layout" >
+            <label class="radio-inline">
+              <input type="radio" name="pinfen" value="-1"> <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="pinfen" value="1"> <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="pinfen" value="0"> <span class="glyphicon glyphicon-record" aria-hidden="true"></span>
+            </label>
+            <textarea name="PJcontent" id="PJcontent" cols="30" rows="3" placeholder="请认真评价"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="savecontent">评价</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+</body>
+</html>

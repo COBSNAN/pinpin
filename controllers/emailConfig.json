@@ -1,0 +1,9 @@
+{
+         host: 'smtp.qq.com',
+         port: 465,
+         secure: true, // use SSL 
+         auth: {
+             user: '1162580903@qq.com',
+             pass: 'lovesky110'
+         }
+}

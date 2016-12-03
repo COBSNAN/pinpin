@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<script type="text/javascript" src="/javascripts/jquery-1.12.1.min.js"></script>
+	<link rel="stylesheet" href="/stylesheets/bootstrap.css">
+	<script type="text/javascript" src="/javascripts/bootstrap.js"></script>
+	<title>Document</title>
+	<script>
+		$(function(){
+			$("#dd").click(function(event) {
+				/* Act on the event */
+				console.log(5245454163543)
+				  // $.ajax({
+      //           type: "POST",
+      //           url: "/upload",
+      //           data: { images: $("#d12").val() },
+      //           cache: false,
+      //           success: function(data) {
+      //               alert("上传成功");
+      //           },
+      //           error: function(XMLHttpRequest, textStatus, errorThrown) {
+      //               alert("上传失败，请检查网络后重试");
+      //           }
+      //       });
+      //$("#hh").submit()
+   //    				var formData = new FormData($("#hh")[0]);
+   //    					 $.ajax({  
+			//                 url :'/upload',  
+			//                 type : 'POST',  
+			//                 data : formData,  
+			//   
+			//                 /**   
+			//                  * 必须false才会避开jQuery对 formdata 的默认处理   
+			//                  * XMLHttpRequest会对 formdata 进行正确的处理   
+			//                  */  
+			//                 processData : false,  
+			//                 *   
+			//                  *必须false才会自动加上正确的Content-Type   
+			//                    
+			//                 contentType : false,  
+			//                 success : function(responseStr) {  
+			//                                     alert("成功：" + JSON.stringify(responseStr));  
+			//                 },  
+			//                 error : function(responseStr) {  
+			//                     alert("失败:" + JSON.stringify(responseStr));//将    json对象    转成    json字符串。  
+			//                 }  
+			//             });consoele
+			//console.log()
+			$("#IMGCS").attr('src',"file:///"+$("#d12").val());
+
+				})
+
+
+			$('#imageid').change(function(){
+			      console.log(this.files.length);
+			        var file=this.files[1];
+			        var reader=new FileReader();
+			        reader.onload=function(){
+			            // 通过 reader.result 来访问生成的 DataURL
+			            var url=reader.result;
+			            $("#IMGCS").attr('src',url);
+			        }
+			        reader.readAsDataURL(file);
+			    })
+		})
+	</script>
+</head>
+<body>
+	<form method='post' action='/upload' enctype='multipart/form-data' id="hh">
+	  <input type="file" name='images' id="imageid" multiple="multiple" /><br>
+	  
+	</form>
+	<div id="dd">hhe</div>
+	<img src="" alt="" id="IMGCS">
+</body>
+</html>

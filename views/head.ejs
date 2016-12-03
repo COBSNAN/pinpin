@@ -1,0 +1,29 @@
+<div style="height: 70px;background:#87CEFA "><div style="max-width:1600px;margin:auto"><img src="/images/tubiao.png" alt="" style="height: 60px;"><!-- Single button -->
+	<span class="title1" style="font-size :2em;font-weight:bold;padding-left:20px;">让我们一起使用拼拼&nbsp;&nbsp;&nbsp;</span>
+	<span class="title1" style="font-size :2em;font-weight:bold;padding-left:10%;padding-right:10%">You have to fight with us, be strong&nbsp;&nbsp;&nbsp;</span>
+	<span class="title2" style="font-size :1.5em;font-weight:bold;padding-left:10px; display:none">拼拼&nbsp;&nbsp;&nbsp;</span>
+	<a class="btn btn-primary" href="/order/order" id="userinfo">添加订单</a> 
+	<img src="/images/headimage/<%=loginuser.headaddr%>" alt="" style="height: 50px;padding-right:15px" class="img-rounded">
+	<div class="btn-group">
+	  <a type="button" class=" dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size :2em;font-weight:bold;">
+	   <%=loginuser.nickname%>
+	  </a>
+	  <ul class="dropdown-menu" >
+	    <li><a href="/account/userDetail?email=<%=loginuser.email%>" id="mymain">个人主页</a></li>
+	    <li><a href="/order/getOrderList?flag=0">回到订单列表</a></li>
+	    <li role="separator" class="divider"></li>
+	    <li><a href="/chat">聊天窗</a></li>
+	    <li><a href="/chat/getsysmsg">系统消息</a></li>
+	  </ul>
+	</div>
+	</div>
+</div>
+<script>
+	$(function(){
+		console.log($(window).width());
+		if($(window).width()<=800){
+			$(".title1").hide();$(".title2").show();
+			$("#userinfo").css('margin-left',($(window).width()-450)+'px');
+		}
+	})
+</script>
