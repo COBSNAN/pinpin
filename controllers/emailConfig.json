@@ -4,6 +4,6 @@
          secure: true, // use SSL 
          auth: {
              user: '1162580903@qq.com',
-             pass: 'lovesky110'
+             pass: '****'
          }
 }
