@@ -132,8 +132,8 @@ exports.sendVerifyEmail = function(req,res){
                     port: 465,
                     secure: true, // use SSL 
                     auth: {
-                        user: '1162580903@qq.com',
-                        pass: 'lovesky110'
+                        user: 'xxxx@qq.com',
+                        pass: 'xxxxx'
                     }
                 });
             var verifyPin=utils.verifyPin();
